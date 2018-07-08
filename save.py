@@ -1,44 +1,65 @@
+# !/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
 import nibabel as nib
 from nibabel import streamlines
-from dipy.tracking import streamline
-
-def save_selectfiber(roi1,roi2,Ori_fiber,Out_fiber):
-    # roi1 : roi coordinate             format:nii.gz
-    # roi2 : roi coordinate             format:nii.gz
-    # Ori_fiber : Original fiber        format:tck
-    # Out_fiber : selected fiber name   format:tck
-    #load(pathname)
-
-    # load
-    roi1 = nib.load(roi1)
-    roi2 = nib.load(roi2)
-    Ori_fiber = streamlines.TckFile.load(Ori_fiber)
-
-    roi_affine = roi1.affine
-    roi1_data = roi1.get_data().astype(bool)
-    roi2_data = roi2.get_data().astype(bool)
-    stream_lines = Ori_fiber.streamlines
-    header = Ori_fiber.header
-    data_per_streamline = Ori_fiber.tractogram.data_per_streamline
-    data_per_point = Ori_fiber.tractogram.data_per_point
-    affine_to_rasmm = Ori_fiber.tractogram.affine_to_rasmm
-
-    #select
-    roi1_streamlines = streamline.select_by_rois(stream_lines,[roi1_data],[True],mode='any',affine=roi_affine)
-    streamlines1 = list(roi1_streamlines)
-    roi2_streamlines = streamline.select_by_rois(streamlines1,[roi2_data],[True],mode='any',affine=roi_affine)
-    streamlines2 = list(roi2_streamlines)
-
-    #save
-    save_streamline = streamlines.array_sequence.ArraySequence(streamlines2)
-
-    tractogram = streamlines.tractogram.Tractogram(streamlines=save_streamline,data_per_streamline=data_per_streamline,
-                                                   data_per_point=data_per_point,affine_to_rasmm=affine_to_rasmm)
-    datdat = streamlines.tck.TckFile(tractogram=tractogram,header=header)
-    datdat.save(Out_fiber)
+import nibabel.streamlines.tck as nibtck
 
 
+def save_tck(streamline=None, header=None, data_per_streamline=None,
+             data_per_point=None, affine_to_rasmm=None, out_path=None):
+    """
+    save streamlines data
+    Parameters
+    ----------
+    streamlines: iterable of ndarrays or :class:`ArraySequence`, optional
+            Sequence of $T$ streamlines. Each streamline is an ndarray of
+            shape ($N_t$, 3) where $N_t$ is the number of points of
+            streamline $t$.
+    header:streamlines data header
+    data_per_streamline: dict of iterable of ndarrays, optional
+            Dictionary where the items are (str, iterable).
+            Each key represents an information $i$ to be kept alongside every
+            streamline, and its associated value is an iterable of ndarrays of
+            shape ($P_i$,) where $P_i$ is the number of scalar values to store
+            for that particular information $i$.
+    data_per_point: dict of iterable of ndarrays, optional
+            Dictionary where the items are (str, iterable).
+            Each key represents an information $i$ to be kept alongside every
+            point of every streamline, and its associated value is an iterable
+            of ndarrays of shape ($N_t$, $M_i$) where $N_t$ is the number of
+            points for a particular streamline $t$ and $M_i$ is the number
+            scalar values to store for that particular information $i$.
+    affine_to_rasmm: ndarray of shape (4, 4) or None, optional
+            Transformation matrix that brings the streamlines contained in
+            this tractogram to *RAS+* and *mm* space where coordinate (0,0,0)
+            refers to the center of the voxel. By default, the streamlines
+            are in an unknown space, i.e. affine_to_rasmm is None.
+    out_path:save filename
+
+    Return
+    ------
+    streamlines data
+    """
+    tractogram = streamlines.tractogram.Tractogram(streamlines=streamline, data_per_streamline=data_per_streamline,
+                                               data_per_point=data_per_point, affine_to_rasmm=affine_to_rasmm)
+    datdat = nibtck.TckFile(tractogram=tractogram, header=header)
+    datdat.save(out_path)
 
 
+def save_nifti(volume, affine, output, dtype="float32"):
+    """
+    save volume data to nifti file
+    Parameters
+    ----------
+    volume: input volume data
+    affine: affine of volume
+    output: save filename
 
-
+    Return
+    ------
+    nifti file
+    """
+    dm_img = nib.Nifti1Image(volume.astype(dtype), affine)
+    dm_img.to_filename(output)

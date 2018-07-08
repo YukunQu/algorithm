@@ -12,11 +12,12 @@ the main functions using the following modules.
 """
 
 import numpy as np
+import nibabel as nib
+import nibabel.streamlines.tck as nibtck
 from dipy.viz import actor, window, ui
 
 
-def fiber_simple_3d_show_advanced(img, streamlines, colors=None, linewidth=1, s='png', world_coords=True,
-                                  slicer_opacity=0.6):
+def fiber_simple_3d_show_advanced(img, streamlines,colors = None,linewidth = 1):
 
     streamlines = streamlines
     data = img.get_data()
@@ -230,7 +231,7 @@ def fiber_simple_3d_show_advanced(img, streamlines, colors=None, linewidth=1, s=
         if size != obj.GetSize():
             size_old = size
             size = obj.GetSize()
-            size_change = [size[0] - size_old[0], 0]
+            size_change = (size[0] - size_old[0], 0)
             panel.re_align(size_change)
 
     show_m.initialize()
@@ -269,3 +270,10 @@ def fiber_simple_3d_show_advanced(img, streamlines, colors=None, linewidth=1, s=
     .. include:: ../links_names.inc
 
     """
+
+img_T1w = nib.load('/nfs/s2/userhome/quyukun/workingdir/fiberdata/subjects/100206/'
+                   'T1w_acpc_dc_restore_brain1.25.nii.gz')
+img_fiber = nibtck.TckFile.load('/nfs/s2/userhome/quyukun/workingdir/fiberdata/subjects/100206/Diffusion/tractography'
+                                '/Det/SD_Stream_angle20_cutoff0.1_length20_80_seedAC0.5_100k.tck').streamlines
+
+fiber_simple_3d_show_advanced(img_T1w,img_fiber,colors=None,linewidth=1)
